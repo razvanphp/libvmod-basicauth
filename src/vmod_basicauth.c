@@ -1,0 +1,212 @@
+/* This file is part of libvmod_basicauth
+   Copyright (C) 2013 Sergey Poznyakoff
+
+   Libvmod_basicauth is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3, or (at your option)
+   any later version.
+
+   Libvmod_basicauth is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with libvmod_basicauth.  If not, see <http://www.gnu.org/licenses/>.
+*/
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+#include <stdbool.h>
+#include <crypt.h>
+
+#include "vrt.h"
+#include "vcc_if.h"
+
+#include "basicauth.h"
+
+static int b64val[128] = {
+    	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,
+        52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1,
+	-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,
+	-1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+        41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1
+};
+
+static int
+base64_decode(const unsigned char *input, size_t input_len,
+              unsigned char *output, size_t output_len)
+{
+	unsigned char *out = output;
+#define AC(c) do { if (--output_len == 0) return -1; *out++ = (c); } while (0)
+	
+    	if (!out)
+        	return -1;
+    	do {
+        	if (input[0] > 127 || b64val[input[0]] == -1 || 
+                    input[1] > 127 || b64val[input[1]] == -1 || 
+                    input[2] > 127 || 
+                    ((input[2] != '=') && (b64val[input[2]] == -1)) || 
+                    input[3] > 127 || 
+                    ((input[3] != '=') && (b64val[input[3]] == -1))) {
+            		errno = EINVAL;
+            		return -1;
+        	}
+        	AC((b64val[input[0]] << 2) | (b64val[input[1]] >> 4));
+        	if (input[2] != '=') {
+            		AC(((b64val[input[1]] << 4) & 0xf0) | 
+                           (b64val[input[2]] >> 2));
+            		if (input[3] != '=')
+                		AC(((b64val[input[2]] << 6) & 0xc0) | 
+                                    b64val[input[3]]);
+        	}
+        	input += 4;
+        	input_len -= 4;
+    	} while (input_len > 0);
+    	return out - output;
+}
+
+struct priv_data {
+	struct crypt_data cdat;
+};
+
+int
+init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
+{
+	struct priv_data *p = malloc(sizeof(*p));
+
+	p->cdat.initialized = 0;
+	priv->priv = p;
+	priv->free = free;
+			    
+        return 0;
+}
+
+/* Matchers */
+
+static int
+crypt_match(const char *pass, const char *hash, struct priv_data *pd)
+{
+	return strcmp(crypt_r(pass, hash, &pd->cdat), hash);
+}
+
+static int
+plain_match(const char *pass, const char *hash, struct priv_data *pd)
+{
+	return strcmp(pass, hash);
+}
+
+static int
+apr_match(const char *pass, const char *hash, struct priv_data *pd)
+{
+	unsigned char buf[120];
+	return strcmp(apr_md5_encode(pass, hash, buf, sizeof(buf)), hash);
+}
+
+
+/* Matcher table */
+struct matcher {
+	char *cm_pfx;
+	size_t cm_len;
+	int (*cm_match)(const char *, const char *, struct priv_data *);
+};
+
+static struct matcher match_tab[] = {
+#define S(s) #s, sizeof(#s)-1
+	{ S($apr1$), apr_match },
+	{ "", 0, crypt_match },
+	{ "", 0, plain_match },
+	{ NULL }
+};
+
+static int
+match(const char *pass, const char *hash, struct priv_data *pd)
+{
+	struct matcher *p;
+	size_t plen = strlen(pass);
+
+	for (p = match_tab; p->cm_match; p++) {
+		if (p->cm_len < plen && 
+		    memcmp(p->cm_pfx, hash, p->cm_len) == 0 &&
+		    p->cm_match(pass, hash, pd) == 0)
+		    return 0;
+	}
+	return 1;
+}
+
+#define BASICPREF "Basic "
+#define BASICLEN (sizeof(BASICPREF)-1)
+
+unsigned
+vmod_match(struct sess *sp, struct vmod_priv *priv,
+	   const char *file, const char *s)
+{
+	char buf[1024];	
+	char lbuf[1024];	
+	char *pass;
+	int n;
+	FILE *fp;
+	int rc;
+
+//	openlog("basicauth",LOG_NDELAY|LOG_PERROR|LOG_PID,LOG_AUTHPRIV);
+	if (!s || strncmp(s, BASICPREF, BASICLEN))
+		return false;
+	s += BASICLEN;
+	n = base64_decode(s, strlen(s), buf, sizeof(buf));
+	if (n < 0) {
+		syslog(LOG_AUTHPRIV|LOG_ERR, "cannot decode %s", s);
+		return false;
+	} else if (n == sizeof(buf)) {
+		syslog(LOG_AUTHPRIV|LOG_ERR, "hash too long");
+		return false;
+	}
+	buf[n] = 0;
+
+//	syslog(LOG_AUTHPRIV|LOG_DEBUG, "%s => %*.*s", s, n, n, buf);
+	pass = strchr(buf, ':');
+	if (!pass) {
+		syslog(LOG_AUTHPRIV|LOG_ERR, "invalid input");
+		return false;
+	}
+	*pass++ = 0;
+
+	fp = fopen(file, "r");
+	if (!fp) {
+		syslog(LOG_AUTHPRIV|LOG_ERR, "cannot open file %s: %m", file);
+		return false;
+	}
+//	syslog(LOG_AUTHPRIV|LOG_DEBUG, "scanning file %s", file);
+	rc = false;
+	while (fgets(lbuf, sizeof(lbuf), fp)) {
+		char *p, *q;
+		for (p = lbuf; *p && (*p == ' ' || *p == '\t'); p++);
+		if (*p == '#')
+			continue;
+		q = p + strlen(p);
+		if (q == p)
+			continue;
+		if (q[-1] == '\n')
+			*--q = 0;
+		if (!*p)
+			continue;
+//		syslog(LOG_AUTHPRIV|LOG_DEBUG, "LINE %s", p);
+		q = strchr(p, ':');
+		if (!q) 
+			continue;
+		*q++ = 0;
+		if (strcmp(p, buf))
+			continue;
+		rc = match(pass, q, priv->priv) == 0;
+//		syslog(LOG_AUTHPRIV|LOG_DEBUG, "user=%s, rc=%d",p,rc);
+		break;
+	}
+	fclose(fp);
+	return rc;
+}

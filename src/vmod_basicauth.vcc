@@ -1,0 +1,4 @@
+Module basicauth
+Init init_function
+Function BOOL match(PRIV_VCL, STRING, STRING)
+

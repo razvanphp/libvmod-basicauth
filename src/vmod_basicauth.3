@@ -1,0 +1,82 @@
+.\" This file is part of libvmod_basicauth -*- nroff -*-
+.\" Copyright (C) 2013 Sergey Poznyakoff
+.\"
+.\" Libvmod_basicauth is free software; you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation; either version 3, or (at your option)
+.\" any later version.
+.\"
+.\" Libvmod_basicauth is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with libvmod_basicauth.  If not, see <http://www.gnu.org/licenses/>.
+.TH VMOD_BASICAUTH 1 "July 7, 2013" "VMOD_BASICAUTH" "User Reference"
+.SH NAME
+vmod_basicauth \- Basic HTTP authentication
+.SH SYNOPSIS
+.B import basicauth
+.SH DESCRIPTION
+The
+.B vmod_basicauth
+module implements basic HTTP authentication against the password file
+created using the
+.BR htpasswd (1)
+command.
+.PP
+Three kinds of password hashes are supported:
+Apache MD5 (\fB$apr1$\fR),
+.BR crypt (3),
+and plaintext.
+.SH FUNCTIONS
+.SS match
+.TP
+.B Prototype
+match(STRING \fIFILE\fR, STRING \fIAUTHSTR\fR)
+.TP
+.B Return value
+Bool
+.TP
+.B Description
+\fIAUTHSTR\fR is the authentication string as supplied with the
+.B Authorization:
+header.  The function checks if it matches one of the lines in
+the password file \fIFILE\fR and returns \fBtrue\fR if so.
+.TP
+.B Example
+.sp
+.nf
+.in +2
+if (!basicauth.match("/var/www/.htpasswd",
+                     req.http.Authorization)) {
+	error 401 "Restricted";
+}
+.in
+.fi
+.SH "SEE ALSO"
+.BR vcl (7),
+.BR varnishd (1).
+.SH AUTHORS
+Sergey Poznyakoff
+.SH "BUG REPORTS"
+Report bugs to <gray@gnu.org>.
+.SH COPYRIGHT
+Copyright \(co 2013 Sergey Poznyakoff
+.br
+.na
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+.br
+.ad
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+.\" Local variables:
+.\" eval: (add-hook 'write-file-hooks 'time-stamp)
+.\" time-stamp-start: ".TH [A-Z_][A-Z0-9_.-]* [0-9] \""
+.\" time-stamp-format: "%:B %:d, %:y"
+.\" time-stamp-end: "\""
+.\" time-stamp-line-limit: 20
+.\" end:
+
+	      

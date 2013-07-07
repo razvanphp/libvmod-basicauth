@@ -1,0 +1,56 @@
+* Overview
+
+This module implements basic HTTP authentication against the password file
+created with the htpasswd(1) utility.  Three kinds of password hashes are
+supported: Apache MD5, crypt(3), and plaintext.
+
+* Example
+
+import basicauth;
+
+sub vcl_recv {
+	if (!basicauth.match("/var/www/.htpasswd",
+		             req.http.Authorization)) {
+		error 401 "Authentication required";
+	}
+}	
+
+* Installation
+
+In order to compile the package you need to have Varnish source tree.
+At least Varnish 3.0.1 is required.  Supposing that the varnish source tree
+is available under /usr/src/varnish-3.0.1, run:
+
+  ./configure --with-varnish-source=/usr/src/varnish-3.0.1 --with-vmod-dir
+
+The first option tells configure where Varnish sources reside, the
+second one (--with-vmod-dir) instructs it to place created module
+files to the standard Varnish module directory.
+
+Once configured, do
+  
+  make
+
+This will build the module.  After this step you can optionally run
+'make test' to test the package.
+
+Finally, do the following command as root:
+  
+  make install
+
+* Documentation
+
+The manual page vmod_basicauth(3) will be available after successful
+install.  To read it without installing the module, run
+'man src/vmod_basicauth.3'.
+  
+* Bug reporting
+
+Send bug reports and suggestions to <gray@gnu.org>
+
+
+Local Variables:
+mode: outline
+paragraph-separate: "[ 	]*$"
+version-control: never
+End:
