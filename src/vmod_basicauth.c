@@ -28,6 +28,7 @@
 #include "vcc_if.h"
 
 #include "basicauth.h"
+#include "sha1.h"
 
 static int b64val[128] = {
     	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -45,10 +46,11 @@ base64_decode(const unsigned char *input, size_t input_len,
               unsigned char *output, size_t output_len)
 {
 	unsigned char *out = output;
-#define AC(c) do { if (--output_len == 0) return -1; *out++ = (c); } while (0)
+#define AC(c) do { if (output_len-- == 0) return -1; *out++ = (c); } while (0)
 	
     	if (!out)
         	return -1;
+
     	do {
         	if (input[0] > 127 || b64val[input[0]] == -1 || 
                     input[1] > 127 || b64val[input[1]] == -1 || 
@@ -110,6 +112,28 @@ apr_match(const char *pass, const char *hash, struct priv_data *pd)
 	return strcmp(apr_md5_encode(pass, hash, buf, sizeof(buf)), hash);
 }
 
+#define SHA1_DIGEST_SIZE 20
+
+static int
+sha1_match(const char *pass, const char *hash, struct priv_data *pd)
+{
+	char hashbuf[SHA1_DIGEST_SIZE], resbuf[SHA1_DIGEST_SIZE];
+	int n;
+	
+	hash += 5; /* Skip past {SHA} */
+	n = base64_decode(hash, strlen(hash), hashbuf, sizeof(hashbuf));
+	if (n < 0) {
+		syslog(LOG_AUTHPRIV|LOG_ERR, "cannot decode %s", hash);
+		return 1;
+	}
+	if (n != SHA1_DIGEST_SIZE) {
+		syslog(LOG_AUTHPRIV|LOG_ERR, "bad hash length: %s %d", hash, n);
+		return 1;
+	}
+	sha1_buffer(pass, strlen(pass), resbuf);
+
+	return memcmp(resbuf, hashbuf, SHA1_DIGEST_SIZE);
+}
 
 /* Matcher table */
 struct matcher {
@@ -121,6 +145,7 @@ struct matcher {
 static struct matcher match_tab[] = {
 #define S(s) #s, sizeof(#s)-1
 	{ S($apr1$), apr_match },
+	{ S({SHA}), sha1_match },
 	{ "", 0, crypt_match },
 	{ "", 0, plain_match },
 	{ NULL }

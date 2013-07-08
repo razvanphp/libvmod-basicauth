@@ -11,6 +11,8 @@ libvmod_basicauth_la_LIBADD=-lcrypt
 libvmod_basicauth_la_SOURCES = \
 	basicauth.h\
 	md5.c\
+	sha1.c\
+	sha1.h\
 	vcc_if.c \
 	vcc_if.h \
 	vmod_basicauth.c

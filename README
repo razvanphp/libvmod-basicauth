@@ -1,8 +1,8 @@
 * Overview
 
 This module implements basic HTTP authentication against the password file
-created with the htpasswd(1) utility.  Three kinds of password hashes are
-supported: Apache MD5, crypt(3), and plaintext.
+created with the htpasswd(1) utility.  The following password hashes are
+supported: Apache MD5, crypt(3), SHA1, and plaintext.
 
 * Example
 

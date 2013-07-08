@@ -1,7 +1,8 @@
 VMOD_TESTS = \
  test00.vtc\
  test01.vtc\
- test02.vtc
+ test02.vtc\
+ test03.vtc
 
 EXTRA_DIST=$(VMOD_TESTS) htpasswd
 
