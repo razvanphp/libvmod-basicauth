@@ -1,0 +1,24 @@
+Vmod-basicauth NEWS -- history of user-visible changes. 2013-07-09
+Copyright (C) 2013 Sergey Poznyakoff
+See the end of file for copying conditions.
+
+Please send Vmod-basicauth bug reports to <gray@gnu.org>
+
+Version 1.1, 2013-07-09
+
+Implement SHA1 passwords.
+
+
+Version 1.0, 2013-07-07
+
+Initial release.
+
+
+Local variables:
+mode: outline
+paragraph-separate: "[	]*$"
+eval: (add-hook 'write-file-hooks 'time-stamp)
+time-stamp-start: "changes. "
+time-stamp-format: "%:y-%02m-%02d"
+time-stamp-end: "\n"
+end:
