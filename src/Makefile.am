@@ -17,6 +17,8 @@ libvmod_basicauth_la_SOURCES = \
 	vcc_if.h \
 	vmod_basicauth.c
 
+BUILT_SOURCES = vcc_if.c vcc_if.h
+
 vcc_if.c vcc_if.h: $(VARNISHSRC)/lib/libvmod_std/vmod.py $(top_srcdir)/src/vmod_basicauth.vcc
 	@PYTHON@ $(VARNISHSRC)/lib/libvmod_std/vmod.py $(top_srcdir)/src/vmod_basicauth.vcc
 
