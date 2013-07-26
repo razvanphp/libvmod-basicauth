@@ -1,8 +1,10 @@
-Vmod-basicauth NEWS -- history of user-visible changes. 2013-07-09
+Vmod-basicauth NEWS -- history of user-visible changes. 2013-07-26
 Copyright (C) 2013 Sergey Poznyakoff
 See the end of file for copying conditions.
 
 Please send Vmod-basicauth bug reports to <gray@gnu.org>
+
+Version 1.1.90 (Git)
 
 Version 1.1, 2013-07-09
 

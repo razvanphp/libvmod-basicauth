@@ -1,18 +1,18 @@
-/* This file is part of libvmod_basicauth
+/* This file is part of vmod-basicauth
    Copyright (C) 2013 Sergey Poznyakoff
 
-   Libvmod_basicauth is free software; you can redistribute it and/or modify
+   Vmod-basicauth is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
-   Libvmod_basicauth is distributed in the hope that it will be useful,
+   Vmod-basicauth is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with libvmod_basicauth.  If not, see <http://www.gnu.org/licenses/>.
+   along with vmod-basicauth.  If not, see <http://www.gnu.org/licenses/>.
 */
 #define _GNU_SOURCE
 #include <stdio.h>
