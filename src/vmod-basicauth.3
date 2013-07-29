@@ -41,14 +41,12 @@ is the authentication string (normally, the value of the
 \fBAuthorization\fR HTTP header.
 .PP
 .SS Example
-.sp
-.nf
-.in +2
+.PP
+.EX
 if (!basicauth.match("/var/www/.htpasswd", req.http.Authorization)) {
     error 401 "Restricted";
 }
-.in
-.fi
+.EE
 .\" The MANCGI variable is set by man.cgi script on Ulysses.
 .\" The download.inc file contains the default DOWNLOAD section
 .\" for man-based doc pages.
