@@ -15,6 +15,7 @@
    along with vmod-basicauth.  If not, see <http://www.gnu.org/licenses/>.
 */
 #define _GNU_SOURCE
+#include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -26,6 +27,15 @@
 
 #include "vrt.h"
 #include "vcc_if.h"
+#include "pthread.h"
+#if VARNISHVERSION == 3
+# define VCL_VOID void
+# define VCL_BOOL unsigned
+# define VCL_STRING const char *
+# define MOD_CTX struct sess *
+#else
+# define MOD_CTX const struct vrt_ctx *
+#endif
 
 #include "basicauth.h"
 #include "sha1.h"
@@ -169,9 +179,8 @@ match(const char *pass, const char *hash, struct priv_data *pd)
 #define BASICPREF "Basic "
 #define BASICLEN (sizeof(BASICPREF)-1)
 
-unsigned
-vmod_match(struct sess *sp, struct vmod_priv *priv,
-	   const char *file, const char *s)
+VCL_BOOL
+vmod_match(MOD_CTX sp, struct vmod_priv *priv, VCL_STRING file, VCL_STRING s)
 {
 	char buf[1024];	
 	char lbuf[1024];	

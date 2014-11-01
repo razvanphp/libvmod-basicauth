@@ -1,5 +1,5 @@
 # This file is part of vmod-basicauth 
-# Copyright (C) 2013 Sergey Poznyakoff
+# Copyright (C) 2013-2014 Sergey Poznyakoff
 #
 # Vmod-basicauth is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,17 +29,34 @@ libvmod_basicauth_la_SOURCES = \
 	md5.c\
 	sha1.c\
 	sha1.h\
-	vcc_if.c \
-	vcc_if.h \
 	vmod_basicauth.c
 
-BUILT_SOURCES = vcc_if.c vcc_if.h
+nodist_libvmod_basicauth_la_SOURCES = vcc_if.c vcc_if.h
 
-vcc_if.c vcc_if.h: $(VARNISHSRC)/lib/libvmod_std/vmod.py $(top_srcdir)/src/vmod_basicauth.vcc
-	@PYTHON@ $(VARNISHSRC)/lib/libvmod_std/vmod.py $(top_srcdir)/src/vmod_basicauth.vcc
+vmod_basicauth.lo: vcc_if.h
+
+CLEANFILES = vcc_if.c vcc_if.h *.rst
+
+if VARNISH4
+  vmodtool = $(VARNISHSRC)/lib/libvcc/vmodtool.py
+  vmodtoolargs = --strict
+  vccfile = $(top_srcdir)/src/vmod_basicauth.vcc
+else
+  vmodtool = $(VARNISHSRC)/lib/libvmod_std/vmod.py
+  vmodtoolargs =
+  vccfile = vmod_basicauth.vcc3
+
+vmod_basicauth.vcc3: $(top_srcdir)/src/vmod_basicauth.vcc
+  CLEANFILES += vmod_basicauth.vcc3
+endif
+
+.vcc.vcc3:
+	sed -n '/^\$$/{s///;s/\(Module  *[^ ][^ ]*\).*/\1/;p}' $< > $@
+
+vcc_if.c vcc_if.h: $(vmodtool) $(vccfile)
+	@PYTHON@ $(vmodtool) $(vmodtoolargs) $(vccfile)
 
 EXTRA_DIST = \
 	vmod_basicauth.vcc
 
-CLEANFILES = $(builddir)/vcc_if.c $(builddir)/vcc_if.h
 
