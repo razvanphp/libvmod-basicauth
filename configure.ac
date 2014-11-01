@@ -100,6 +100,15 @@ if test -z "$VMODDIR"; then
        VMODDIR='$(libdir)/varnish/mods'
 fi
 
+AC_CONFIG_COMMANDS([status],[
+delim="-------------------------------------------------------------------"
+echo ""
+echo $delim
+echo "Building for Varnish version $VARNISHVERSION"
+echo $delim
+],
+[VARNISHVERSION=$VARNISHVERSION])
+
 AC_CONFIG_FILES([
 	Makefile
 	src/Makefile
