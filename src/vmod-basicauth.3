@@ -1,5 +1,5 @@
 .\" This file is part of Vmod-basicauth -*- nroff -*-
-.\" Copyright (C) 2013-2014 Sergey Poznyakoff
+.\" Copyright (C) 2013-2015 Sergey Poznyakoff
 .\"
 .\" Vmod-basicauth is free software; you can redistribute it and/or modify
 .\" it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 .\"
 .\" You should have received a copy of the GNU General Public License
 .\" along with vmod-basicauth.  If not, see <http://www.gnu.org/licenses/>.
-.TH VMOD-BASICAUTH 1 "November 10, 2014" "VMOD-BASICAUTH" "User Reference"
+.TH VMOD-BASICAUTH 1 "January 30, 2015" "VMOD-BASICAUTH" "User Reference"
 .SH NAME
 vmod-basicauth \- Basic HTTP authentication
 .SH SYNOPSIS
@@ -22,7 +22,7 @@ vmod-basicauth \- Basic HTTP authentication
 .BI "BOOL basicauth.match(STRING " passfile ", STRING " authstr );
 .SH DESCRIPTION
 The
-.B vmod-basicauth
+.B vmod\-basicauth
 module implements basic HTTP authentication against the password file
 created using the
 .BR htpasswd (1)
@@ -43,16 +43,36 @@ is the authentication string (normally, the value of the
 .SS Example: VCL 3.0
 .PP
 .EX
-if (!basicauth.match("/var/www/.htpasswd", req.http.Authorization)) {
-    error 401 "Restricted";
+sub vcl_recv {
+    if (!basicauth.match("/var/www/.htpasswd",
+                         req.http.Authorization)) {
+        error 401 "Restricted";
+    }
 }
+
+sub vcl_error {
+    if (obj.status == 401) {
+        set obj.http.WWW-Authenticate =
+            {"Basic realm="Restricted area""};
+    }
+}    
 .EE
 .SS Example: VCL 4.0
 .PP
 .EX
-if (!basicauth.match("/var/www/.htpasswd", req.http.Authorization)) {
-    return (synth(401, "Restricted"));
+sub vcl_recv {
+    if (!basicauth.match("/var/www/.htpasswd",
+                         req.http.Authorization)) {
+        return (synth(401, "Restricted"));
+    }
 }
+
+sub vcl_synth {
+    if (resp.status == 401) {
+        set resp.http.WWW-Authenticate =
+            {"Basic realm="Restricted area""};
+    }
+}    
 .EE
 .\" The MANCGI variable is set by man.cgi script on Ulysses.
 .\" The download.inc file contains the default DOWNLOAD section
@@ -70,7 +90,7 @@ Sergey Poznyakoff
 .SH "BUG REPORTS"
 Report bugs to <gray@gnu.org>.
 .SH COPYRIGHT
-Copyright \(co 2013-2014 Sergey Poznyakoff
+Copyright \(co 2013-2015 Sergey Poznyakoff
 .br
 .na
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
