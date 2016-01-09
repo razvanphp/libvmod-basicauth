@@ -165,7 +165,7 @@ static int
 match(const char *pass, const char *hash, struct priv_data *pd)
 {
 	struct matcher *p;
-	size_t plen = strlen(pass);
+	size_t plen = strlen(hash);
 
 	for (p = match_tab; p->cm_match; p++) {
 		if (p->cm_len < plen && 
