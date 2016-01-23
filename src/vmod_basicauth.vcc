@@ -1,5 +1,5 @@
 # This file is part of vmod-basicauth 
-# Copyright (C) 2013-2014 Sergey Poznyakoff
+# Copyright (C) 2013-2016 Sergey Poznyakoff
 #
 # Vmod-basicauth is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,8 +29,7 @@ the password file created using the **htpasswd** command.
 Four kinds of password  hashes  are  supported:  Apache MD5, crypt, SHA1,
 and plaintext.
 
-$Init init_function
-$Function BOOL match(PRIV_VCL, STRING, STRING)
+$Function BOOL match(PRIV_TASK, STRING, STRING)
 
 Description
     The **match** function returns **TRUE** or **FALSE** depending on whether

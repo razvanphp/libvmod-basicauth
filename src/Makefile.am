@@ -37,24 +37,12 @@ vmod_basicauth.lo: vcc_if.h
 
 CLEANFILES = vcc_if.c vcc_if.h *.rst
 
-if VARNISH4
-  vmodtool = $(VARNISHSRC)/lib/libvcc/vmodtool.py
-  vmodtoolargs = --strict
-  vccfile = $(top_srcdir)/src/vmod_basicauth.vcc
-else
-  vmodtool = $(VARNISHSRC)/lib/libvmod_std/vmod.py
-  vmodtoolargs =
-  vccfile = vmod_basicauth.vcc3
-
-vmod_basicauth.vcc3: $(top_srcdir)/src/vmod_basicauth.vcc
-  CLEANFILES += vmod_basicauth.vcc3
-endif
-
-.vcc.vcc3:
-	sed -n '/^\$$/{s///;s/\(Module  *[^ ][^ ]*\).*/\1/;p}' $< > $@
+vmodtool = $(VARNISHSRC)/lib/libvcc/vmodtool.py
+vmodtoolargs = --strict
+vccfile = $(top_srcdir)/src/vmod_basicauth.vcc
 
 vcc_if.c vcc_if.h: $(vmodtool) $(vccfile)
-	@PYTHON@ $(vmodtool) $(vmodtoolargs) $(vccfile)
+	$(AM_V_GEN)$(PYTHON) $(vmodtool) $(vmodtoolargs) $(vccfile)
 
 EXTRA_DIST = \
 	vmod_basicauth.vcc

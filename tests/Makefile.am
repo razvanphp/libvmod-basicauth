@@ -1,5 +1,5 @@
 # This file is part of vmod-basicauth
-# Copyright (C) 2013-2014 Sergey Poznyakoff
+# Copyright (C) 2013-2016 Sergey Poznyakoff
 #
 # Vmod-basicauth is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ VMOD_TESTS = \
 EXTRA_DIST=$(VMOD_TESTS) htpasswd
 
 check:
-	cd $(abs_srcdir); \
+	$(AM_V_at)cd $(abs_srcdir); \
 	for t in $(VMOD_TESTS); do \
 	    $(VARNISHSRC)/bin/varnishtest/varnishtest \
                     -Dvarnishd=$(VARNISHSRC)/bin/varnishd/varnishd \

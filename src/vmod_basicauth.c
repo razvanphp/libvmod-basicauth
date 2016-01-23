@@ -25,17 +25,12 @@
 #include <stdbool.h>
 #include <crypt.h>
 
+#include "vcl.h"
 #include "vrt.h"
 #include "vcc_if.h"
 #include "pthread.h"
-#if VARNISHVERSION == 3
-# define VCL_VOID void
-# define VCL_BOOL unsigned
-# define VCL_STRING const char *
-# define MOD_CTX struct sess *
-#else
-# define MOD_CTX const struct vrt_ctx *
-#endif
+
+#define MOD_CTX const struct vrt_ctx *
 
 #include "basicauth.h"
 #include "sha1.h"
@@ -84,23 +79,23 @@ base64_decode(const unsigned char *input, size_t input_len,
     	} while (input_len > 0);
     	return out - output;
 }
-
+
 struct priv_data {
-	struct crypt_data cdat;
+       struct crypt_data cdat;
 };
 
-int
-init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
+static struct priv_data *
+get_priv_data(struct vmod_priv *priv)
 {
-	struct priv_data *p = malloc(sizeof(*p));
-
-	p->cdat.initialized = 0;
-	priv->priv = p;
-	priv->free = free;
-			    
-        return 0;
-}
-
+	if (!priv->priv) {
+		struct priv_data *p = malloc(sizeof(*p));
+		p->cdat.initialized = 0;
+		priv->priv = p;
+		priv->free = free;
+	}
+	return priv->priv;
+}	
+
 /* Matchers */
 
 static int
@@ -237,7 +232,7 @@ vmod_match(MOD_CTX sp, struct vmod_priv *priv, VCL_STRING file, VCL_STRING s)
 		*q++ = 0;
 		if (strcmp(p, buf))
 			continue;
-		rc = match(pass, q, priv->priv) == 0;
+		rc = match(pass, q, get_priv_data(priv)) == 0;
 //		syslog(LOG_AUTHPRIV|LOG_DEBUG, "user=%s, rc=%d",p,rc);
 		break;
 	}
