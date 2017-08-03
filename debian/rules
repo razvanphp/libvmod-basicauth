@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+export DH_VERBOSE=1
+# this should be removed when source code will be replaced by varnish-dev
+export VARNISHSRC=/home/razvanphp/varnish-4.1.7/
+
+override_dh_gencontrol:
+	if [ -n "$$DEBIAN_OVERRIDE_BINARY_VERSION" ]; then \
+		dh_gencontrol -- -v$$DEBIAN_OVERRIDE_BINARY_VERSION; \
+	else \
+		dh_gencontrol ; \
+	fi
+
+%:
+	dh $@

@@ -1,0 +1,17 @@
+Source: libvmod-basicauth
+Section: web
+Priority: extra
+Maintainer: Sergey Poznyakoff <gray@gnu.org>
+Build-Depends: debhelper (>= 7),
+ build-essential,
+ pkg-config,
+ python-docutils,
+ varnish (>= 4.1.1),
+ varnish-dev (>= 4.1.1)
+Standards-Version: 3.8.1
+Vcs-Git: git://git.gnu.org.ua/vmod-basicauth.git
+
+Package: libvmod-basicauth
+Architecture: any
+Depends: varnish (>= 4.1.1), ${shlibs:Depends}, ${misc:Depends}, ${Varnish:ABI}
+Description: Basic HTTP authentication for Varnish
